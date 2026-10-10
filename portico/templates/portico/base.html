@@ -1,0 +1,18 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Pórticos{% endblock %} · SEI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/css/tabulator_simple.min.css">
+  <link rel="stylesheet" href="{% static 'portico/estilo.css' %}?v={{ VERSION_ESTATICOS }}">
+</head>
+<body>
+  <header class="barra">
+    <a class="marca" href="{% url 'lista' %}">SEI · Pórticos <span class="etiqueta">prototipo</span></a>
+    {% block barra %}{% endblock %}
+  </header>
+  <main>{% block contenido %}{% endblock %}</main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

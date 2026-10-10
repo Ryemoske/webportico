@@ -1,0 +1,24 @@
+services:
+  porticos:
+    build: .
+    container_name: porticos
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_SQLITE_PATH: /app/data/db.sqlite3
+    # migraciones al arrancar y después gunicorn (exec: recibe las señales de parada)
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"
+    volumes:
+      - datos:/app/data
+    networks:
+      - web
+    # sin «ports»: solo es accesible desde la red «web», a través de Caddy
+
+volumes:
+  datos:
+
+networks:
+  web:
+    external: true

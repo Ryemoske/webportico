@@ -1,0 +1,41 @@
+{% extends "portico/base.html" %}
+{% block titulo %}Proyectos{% endblock %}
+{% block contenido %}
+<section class="lista">
+  <h1>Proyectos</h1>
+
+  <div class="acciones-lista">
+    <form method="post" class="fila-form">
+      {% csrf_token %}
+      <input name="nombre" placeholder="Nombre del nuevo proyecto" required autofocus>
+      <button class="primario">Nuevo proyecto</button>
+    </form>
+    <form method="post" action="{% url 'importar' %}" enctype="multipart/form-data" class="fila-form">
+      {% csrf_token %}
+      <input type="file" name="archivo" accept=".json,application/json" required>
+      <button>Importar JSON</button>
+    </form>
+  </div>
+
+  {% if proyectos %}
+  <table class="tabla-lista">
+    <thead><tr><th>Nombre</th><th>Modificado</th><th></th></tr></thead>
+    <tbody>
+    {% for p in proyectos %}
+      <tr>
+        <td><a href="{% url 'editor' p.pk %}">{{ p.nombre }}</a></td>
+        <td>{{ p.modificado|date:"d/m/Y H:i" }}</td>
+        <td class="acciones-fila">
+          <a class="boton" href="{% url 'exportar' p.pk %}">Exportar</a>
+          <form method="post" action="{% url 'duplicar' p.pk %}">{% csrf_token %}<button>Duplicar</button></form>
+          <form method="post" action="{% url 'eliminar' p.pk %}" onsubmit="return confirm('¿Eliminar «{{ p.nombre|escapejs }}»? No se puede deshacer.')">{% csrf_token %}<button class="peligro">Eliminar</button></form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="vacio">Todavía no hay proyectos. Crea el primero arriba.</p>
+  {% endif %}
+</section>
+{% endblock %}

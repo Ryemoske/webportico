@@ -1,0 +1,248 @@
+{% extends "portico/base.html" %}
+{% load static %}
+{% block titulo %}{{ proyecto.nombre }}{% endblock %}
+
+{% block barra %}
+  <span id="titulo-proyecto" class="titulo-proyecto">{{ proyecto.nombre }}</span>
+  <span id="estado-guardado" class="estado">Guardado</span>
+  <a class="boton" href="{% url 'exportar' proyecto.pk %}">Exportar JSON</a>
+{% endblock %}
+
+{% block contenido %}
+<div class="editor">
+  <section class="panel-entrada">
+    <nav class="pestanas" role="tablist">
+      <button data-tab="generales" class="activa">1 · Datos generales</button>
+      <button data-tab="cargas">2 · Cargas</button>
+      <button data-tab="brochales">3 · Brochales</button>
+      <button data-tab="pilares">4 · Pilares</button>
+      <button data-tab="tipos-planta">5 · Tipos de planta</button>
+      <button data-tab="niveles">6 · Niveles</button>
+      <button data-tab="revision">7 · Revisión <span id="contador-avisos" class="contador"></span></button>
+    </nav>
+
+    <!-- 1 · Datos generales -->
+    <div class="pestana activa" id="tab-generales">
+      <div class="formulario">
+        <label>Proyecto<input id="nombre-proyecto" value="{{ proyecto.nombre }}" required></label>
+        <label>Ingeniero<input id="ingeniero" autocomplete="name"></label>
+        <label>Fecha de creación<input id="fecha-creado" readonly tabindex="-1" class="solo-lectura"
+               data-iso="{{ proyecto.creado.isoformat }}"></label>
+        <label>Fecha de revisión<input id="fecha-modificado" readonly tabindex="-1" class="solo-lectura"
+               data-iso="{{ proyecto.modificado.isoformat }}"></label>
+      </div>
+      <p class="ayuda">Las fechas son automáticas: creación al crear el proyecto, revisión en cada guardado.</p>
+    </div>
+
+    <!-- 2 · Cargas -->
+    <div class="pestana" id="tab-cargas">
+      <details class="acordeon" open>
+        <summary>Cargas de paño</summary>
+        <div class="contenido-acordeon">
+          <p class="ayuda">Comentarios cargas de paño… por definir</p>
+          <div id="tabla-cargas-pano" class="tabla"></div>
+          <div class="botonera">
+            <button data-accion="anadir" data-tabla="cargasPano">+ Añadir carga de paño</button>
+            <button data-accion="borrar" data-tabla="cargasPano">Eliminar filas seleccionadas</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="acordeon" open>
+        <summary>Cargas lineales</summary>
+        <div class="contenido-acordeon">
+          <p class="ayuda">Comentarios cargas lineales… por definir</p>
+          <div id="tabla-cargas-lineales" class="tabla"></div>
+          <div class="botonera">
+            <button data-accion="anadir" data-tabla="cargasLineales">+ Añadir carga lineal</button>
+            <button data-accion="borrar" data-tabla="cargasLineales">Eliminar filas seleccionadas</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="acordeon" open>
+        <summary>Cargas puntuales</summary>
+        <div class="contenido-acordeon">
+          <p class="ayuda">Comentarios cargas puntuales… por definir</p>
+          <div id="tabla-cargas-puntuales" class="tabla"></div>
+          <div class="botonera">
+            <button data-accion="anadir" data-tabla="cargasPuntuales">+ Añadir carga puntual</button>
+            <button data-accion="borrar" data-tabla="cargasPuntuales">Eliminar filas seleccionadas</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- 3 · Brochales -->
+    <div class="pestana" id="tab-brochales">
+      <div class="selector-grupo">
+        <label>Brochal <select id="brochal-sel"></select></label>
+        <button data-accion="br-nuevo">Nuevo</button>
+        <button data-accion="br-duplicar">Duplicar</button>
+        <button data-accion="br-renombrar">Renombrar</button>
+        <button data-accion="br-eliminar" class="peligro">Eliminar</button>
+      </div>
+
+      <div id="form-brochal">
+        <div class="formulario">
+          <label>Luz (m)<input id="br-luz" autocomplete="off"></label>
+          <fieldset class="radios"><legend>Canto</legend>
+            {% for c in catalogo.cantos %}<label><input type="radio" name="br-canto" value="{{ c }}"> {{ c }} cm</label>{% endfor %}
+          </fieldset>
+        </div>
+        <div id="br-pano-xpos" class="pano"></div>
+        <div id="br-pano-xneg" class="pano"></div>
+        <h3>Reacción sobre la viga</h3>
+        <div id="br-resultados"></div>
+      </div>
+    </div>
+
+    <!-- 4 · Pilares -->
+    <div class="pestana" id="tab-pilares">
+      <p class="ayuda">Una fila por pilar, de izquierda a derecha. Doble clic para editar; se puede pegar desde Excel (Ctrl+V sobre la celda de inicio).</p>
+      <div class="bloque-estrecho ancho">
+        <div id="tabla-pilares" class="tabla"></div>
+        <div class="botonera">
+          <button data-accion="anadir" data-tabla="pilares">+ Añadir pilar</button>
+          <button data-accion="borrar" data-tabla="pilares">Eliminar filas seleccionadas</button>
+        </div>
+        <p class="ayuda" id="resumen-pilares"></p>
+      </div>
+    </div>
+
+    <!-- 5 · Tipos de planta -->
+    <div class="pestana" id="tab-tipos-planta">
+      <div class="selector-grupo">
+        <label>Tipo de planta <select id="tipo-planta-sel"></select></label>
+        <button data-accion="tp-nuevo">Nuevo</button>
+        <button data-accion="tp-duplicar">Duplicar</button>
+        <button data-accion="tp-renombrar">Renombrar</button>
+        <button data-accion="tp-eliminar" class="peligro">Eliminar</button>
+      </div>
+      <p id="uso-tipo-planta" class="ayuda"></p>
+
+      <div id="form-tipo-planta">
+        <div class="formulario">
+          <fieldset class="radios"><legend>Canto forjado</legend>
+            {% for c in catalogo.cantos %}<label><input type="radio" name="tp-canto" value="{{ c }}"> {{ c }} cm</label>{% endfor %}
+          </fieldset>
+        </div>
+
+        <details class="acordeon" open>
+          <summary>Voladizos</summary>
+          <div class="contenido-acordeon voladizos">
+            <span class="voladizo"><label><input type="checkbox" id="tp-vol-inicio"> Inicial</label>
+              <input id="tp-vol-inicio-l" class="corto" placeholder="m" autocomplete="off" aria-label="Longitud del voladizo inicial (m)"> m</span>
+            <span class="voladizo"><label><input type="checkbox" id="tp-vol-fin"> Final</label>
+              <input id="tp-vol-fin-l" class="corto" placeholder="m" autocomplete="off" aria-label="Longitud del voladizo final (m)"> m</span>
+          </div>
+        </details>
+
+        <details class="acordeon" open>
+          <summary>Paños</summary>
+          <div class="contenido-acordeon">
+            <div id="tp-pano-zpos" class="pano"></div>
+            <div id="tp-pano-zneg" class="pano"></div>
+          </div>
+        </details>
+
+        <details class="acordeon" open>
+          <summary>Rótulas</summary>
+          <div class="contenido-acordeon">
+            <h4>Típicas <span class="ud">a {{ catalogo.distancia_rotula_tipica }} m del pilar, hacia dentro</span></h4>
+            <div id="tp-rotulas-tipicas" class="rotulas-tipicas"></div>
+            <h4>A mano</h4>
+            <div class="bloque-estrecho izquierda">
+              <div id="tabla-rotulas-mano" class="tabla"></div>
+              <div class="botonera">
+                <button data-accion="anadir" data-tabla="rotulasMano">+ Añadir rótula</button>
+                <button data-accion="borrar" data-tabla="rotulasMano">Eliminar filas seleccionadas</button>
+              </div>
+            </div>
+            <p id="tp-estabilidad" class="estabilidad"></p>
+          </div>
+        </details>
+
+        <details class="acordeon" open>
+          <summary>Cargas lineales, puntuales y brochales</summary>
+          <div class="contenido-acordeon">
+            <h4>Lineales</h4>
+            <div id="tabla-tp-lineales" class="tabla"></div>
+            <div class="botonera">
+              <button data-accion="anadir" data-tabla="tpLineales">+ Añadir carga lineal</button>
+              <button data-accion="borrar" data-tabla="tpLineales">Eliminar filas seleccionadas</button>
+            </div>
+            <h4>Puntuales</h4>
+            <div id="tabla-tp-puntuales" class="tabla"></div>
+            <div class="botonera">
+              <button data-accion="anadir" data-tabla="tpPuntuales">+ Añadir carga puntual</button>
+              <button data-accion="borrar" data-tabla="tpPuntuales">Eliminar filas seleccionadas</button>
+            </div>
+            <h4>Brochales</h4>
+            <div id="tabla-tp-brochales" class="tabla"></div>
+            <div class="botonera">
+              <button data-accion="anadir" data-tabla="tpBrochales">+ Insertar brochal</button>
+              <button data-accion="borrar" data-tabla="tpBrochales">Eliminar filas seleccionadas</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- 6 · Niveles -->
+    <div class="pestana" id="tab-niveles">
+      <p class="ayuda">Orden de montaje: la fila 1 es el nivel más bajo. El forjado, las rótulas y las cargas de cada nivel vienen de su tipo de planta.</p>
+      <div id="tabla-niveles" class="tabla"></div>
+      <div class="botonera">
+        <button data-accion="anadir" data-tabla="niveles">+ Añadir nivel</button>
+        <button data-accion="copiar-ultimo">+ Repetir último nivel</button>
+        <button data-accion="subir">↑ Subir</button>
+        <button data-accion="bajar">↓ Bajar</button>
+        <button data-accion="borrar" data-tabla="niveles">Eliminar filas seleccionadas</button>
+      </div>
+    </div>
+
+    <!-- 7 · Revisión -->
+    <div class="pestana" id="tab-revision">
+      <h3>Avisos</h3>
+      <ul id="lista-avisos" class="avisos"></ul>
+      <h3>Fases de construcción</h3>
+      <div id="tabla-fases"></div>
+      <h3>Cargas sobre las vigas, por nivel</h3>
+      <p class="ayuda">q en kN/m (suma de ambos lados) · mt = torsor repartido en kN·m/m · totales en kN y kN·m.</p>
+      <div id="cargas-niveles"></div>
+      <details class="json">
+        <summary>Ver datos interpretados (JSON para el motor)</summary>
+        <pre id="json-interpretado"></pre>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel-dibujo">
+    <div class="cabecera-dibujo">
+      <h2 id="titulo-dibujo">Alzado del pórtico</h2>
+      <div class="leyenda" id="leyenda-dibujo">
+        <span><i class="muestra zpos"></i>aportación z+</span>
+        <span><i class="muestra zneg"></i>aportación z−</span>
+        <span><i class="muestra rotula"></i>rótula</span>
+      </div>
+    </div>
+    <div id="dibujo"></div>
+    <div id="resumen-avisos" class="resumen-avisos"></div>
+  </section>
+</div>
+
+{{ datos|json_script:"datos-proyecto" }}
+{{ catalogo|json_script:"catalogo" }}
+<script>
+  window.PORTICO = {
+    urlGuardar: "{% url 'api_guardar' proyecto.pk %}",
+    urlInterpretar: "{% url 'api_interpretar' %}",
+  };
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+<script src="{% static 'portico/editor.js' %}?v={{ VERSION_ESTATICOS }}"></script>
+{% endblock %}

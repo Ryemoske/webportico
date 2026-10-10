@@ -1,0 +1,13 @@
+.git
+.gitignore
+.venv
+.claude
+__pycache__
+*.pyc
+.env
+db.sqlite3
+staticfiles
+compose.yml
+Dockerfile
+.dockerignore
+capacidad_seccion_NMxMz.py

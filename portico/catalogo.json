@@ -1,0 +1,15 @@
+{
+  "nota": "VALORES PROVISIONALES: sustituir por los de las fichas técnicas de SEI",
+  "excentricidad_tacon": 0.40,
+  "ancho_viga": 0.70,
+  "distancia_rotula_tipica": 1.20,
+  "cantos": {
+    "35": { "peso_viga": 5.0, "placa": "PA20", "color": "#2e9e5b" },
+    "40": { "peso_viga": 6.0, "placa": "PA25", "color": "#8e44ad" },
+    "45": { "peso_viga": 6.8, "placa": "PA25", "color": "#c2185b" }
+  },
+  "placas": {
+    "PA20": { "descripcion": "Placa alveolar 20", "canto": 0.20, "peso": 2.8 },
+    "PA25": { "descripcion": "Placa alveolar 25", "canto": 0.25, "peso": 3.4 }
+  }
+}
