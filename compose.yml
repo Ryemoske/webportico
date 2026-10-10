@@ -1,7 +1,7 @@
 services:
-  porticos:
+  portico:
     build: .
-    container_name: porticos
+    container_name: portico
     restart: unless-stopped
     env_file: .env
     environment:
